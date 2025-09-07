@@ -1,4 +1,4 @@
-const {expressjwt: jwt} = require('express-jwt');
+/*const {expressjwt: jwt} = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
 const User = require('../models/User');
 const { auth } = require('express-oauth2-jwt-bearer');
@@ -153,5 +153,88 @@ module.exports = {
   requireAdmin,
   checkOwnership,
   validateTokenFormat,
+  authRateLimit
+};*/
+
+// File: backend/middleware/auth.js
+const rateLimit = require('express-rate-limit');
+
+// Middleware to check if user is authenticated
+const requireAuth = (req, res, next) => {
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    return next();
+  }
+  
+  res.status(401).json({
+    status: 'error',
+    message: 'Authentication required. Please log in.'
+  });
+};
+
+// Middleware to check if user is authenticated (optional)
+const optionalAuth = (req, res, next) => {
+  // Continue regardless of authentication status
+  next();
+};
+
+// Middleware to check if user is admin
+const requireAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Access denied. Admin privileges required.'
+    });
+  }
+  next();
+};
+
+// Middleware to check resource ownership
+const checkOwnership = (resourceField = 'user') => {
+  return (req, res, next) => {
+    // Admin can access all resources
+    if (req.user && req.user.role === 'admin') {
+      return next();
+    }
+
+    // Check if the resource belongs to the current user
+    const resourceUserId = req.resource ? req.resource[resourceField] : null;
+    
+    if (!resourceUserId || !resourceUserId.equals(req.user._id)) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Access denied. You can only access your own resources.'
+      });
+    }
+    
+    next();
+  };
+};
+
+// Middleware to attach current user info to request
+const attachUser = (req, res, next) => {
+  if (req.user) {
+    req.currentUser = req.user;
+  }
+  next();
+};
+
+// Rate limiting for authentication endpoints
+const authRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs for auth
+  message: {
+    status: 'error',
+    message: 'Too many authentication attempts, please try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+module.exports = {
+  requireAuth,
+  optionalAuth,
+  requireAdmin,
+  checkOwnership,
+  attachUser,
   authRateLimit
 };

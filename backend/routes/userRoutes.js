@@ -1,7 +1,8 @@
+
 const express = require('express');
 const { body, param } = require('express-validator');
 const userController = require('../controllers/userController');
-const { authenticate, requireAdmin } = require('../middleware/auth');
+const { requireAuth, requireAdmin, attachUser } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -42,7 +43,8 @@ const updateUserStatusValidation = [
 ];
 
 // Protected user routes (require authentication)
-router.use(authenticate);
+router.use(requireAuth);
+router.use(attachUser);
 
 // User dashboard and profile routes
 router.get('/dashboard', userController.getDashboard);

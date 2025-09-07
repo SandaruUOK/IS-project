@@ -1,49 +1,44 @@
 const express = require('express');
 const { body, param, query } = require('express-validator');
 const orderController = require('../controllers/orderController');
-const { authenticate, requireAdmin } = require('../middleware/auth');
+const { requireAuth, requireAdmin, attachUser } = require('../middleware/auth');
 
 const router = express.Router();
 
 // Validation rules
 const createOrderValidation = [
-  body('productId')
-    .isMongoId()
-    .withMessage('Invalid product ID format'),
+  body('productName')
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Product name is required and must be less than 100 characters'),
   body('quantity')
-    .isInt({ min: 1 })
-    .withMessage('Quantity must be a positive integer'),
-  body('purchaseDate')
+    .isInt({ min: 1, max: 100 })
+    .withMessage('Quantity must be between 1 and 100'),
+  body('deliveryDate')
     .isISO8601()
-    .withMessage('Invalid purchase date format')
+    .withMessage('Valid delivery date is required')
     .custom((value) => {
       const date = new Date(value);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      date.setHours(0, 0, 0, 0);
       
       if (date < today) {
-        throw new Error('Purchase date cannot be in the past');
+        throw new Error('Delivery date cannot be in the past');
       }
       
-      if (date.getDay() === 0) {
+      if (date.getDay() === 0) { // Sunday = 0
         throw new Error('Delivery is not available on Sundays');
       }
       
       return true;
     }),
-  body('preferredDeliveryTime')
+  body('deliveryTime')
     .isIn(['10 AM', '11 AM', '12 PM'])
     .withMessage('Delivery time must be 10 AM, 11 AM, or 12 PM'),
-  body('preferredDeliveryLocation')
-    .isIn([
-      'Colombo', 'Gampaha', 'Kalutara', 'Kandy', 'Matale', 'Nuwara Eliya',
-      'Galle', 'Matara', 'Hambantota', 'Jaffna', 'Kilinochchi', 'Mannar',
-      'Vavuniya', 'Mullaitivu', 'Batticaloa', 'Ampara', 'Trincomalee',
-      'Kurunegala', 'Puttalam', 'Anuradhapura', 'Polonnaruwa', 'Badulla',
-      'Moneragala', 'Ratnapura', 'Kegalle'
-    ])
-    .withMessage('Invalid delivery location'),
+  body('deliveryLocation')
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage('Delivery location is required'),
   body('message')
     .optional()
     .trim()
@@ -52,42 +47,35 @@ const createOrderValidation = [
 ];
 
 const updateOrderValidation = [
-  body('purchaseDate')
+  body('deliveryDate')
     .optional()
     .isISO8601()
-    .withMessage('Invalid purchase date format')
+    .withMessage('Valid delivery date is required')
     .custom((value) => {
-      if (!value) return true;
-      
-      const date = new Date(value);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      date.setHours(0, 0, 0, 0);
-      
-      if (date < today) {
-        throw new Error('Purchase date cannot be in the past');
+      if (value) {
+        const date = new Date(value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (date < today) {
+          throw new Error('Delivery date cannot be in the past');
+        }
+        
+        if (date.getDay() === 0) {
+          throw new Error('Delivery is not available on Sundays');
+        }
       }
-      
-      if (date.getDay() === 0) {
-        throw new Error('Delivery is not available on Sundays');
-      }
-      
       return true;
     }),
-  body('preferredDeliveryTime')
+  body('deliveryTime')
     .optional()
     .isIn(['10 AM', '11 AM', '12 PM'])
     .withMessage('Delivery time must be 10 AM, 11 AM, or 12 PM'),
-  body('preferredDeliveryLocation')
+  body('deliveryLocation')
     .optional()
-    .isIn([
-      'Colombo', 'Gampaha', 'Kalutara', 'Kandy', 'Matale', 'Nuwara Eliya',
-      'Galle', 'Matara', 'Hambantota', 'Jaffna', 'Kilinochchi', 'Mannar',
-      'Vavuniya', 'Mullaitivu', 'Batticaloa', 'Ampara', 'Trincomalee',
-      'Kurunegala', 'Puttalam', 'Anuradhapura', 'Polonnaruwa', 'Badulla',
-      'Moneragala', 'Ratnapura', 'Kegalle'
-    ])
-    .withMessage('Invalid delivery location'),
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage('Delivery location cannot be empty'),
   body('message')
     .optional()
     .trim()
@@ -107,7 +95,7 @@ const cancelOrderValidation = [
     .optional()
     .trim()
     .isLength({ max: 200 })
-    .withMessage('Cancel reason cannot exceed 200 characters')
+    .withMessage('Cancellation reason cannot exceed 200 characters')
 ];
 
 const updateStatusValidation = [
@@ -133,7 +121,8 @@ const paginationValidation = [
 ];
 
 // All routes require authentication
-router.use(authenticate);
+router.use(requireAuth);
+router.use(attachUser);
 
 // User order routes
 router.post('/', createOrderValidation, orderController.createOrder);

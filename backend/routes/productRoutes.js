@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, param, query } = require('express-validator');
 const productController = require('../controllers/productController');
-const { authenticate, requireAdmin, optionalAuth } = require('../middleware/auth');
+const { requireAuth, requireAdmin, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -23,44 +23,6 @@ const productValidation = [
     .isIn(['Electronics', 'Clothing', 'Books', 'Home & Garden', 'Sports', 'Beauty', 'Food', 'Other'])
     .withMessage('Invalid category'),
   body('stock')
-    .isInt({ min: 0 })
-    .withMessage('Stock must be a non-negative integer'),
-  body('image')
-    .optional()
-    .isString()
-    .withMessage('Image must be a string'),
-  body('tags')
-    .optional()
-    .isArray()
-    .withMessage('Tags must be an array'),
-  body('tags.*')
-    .optional()
-    .trim()
-    .isLength({ max: 20 })
-    .withMessage('Each tag cannot exceed 20 characters')
-];
-
-const updateProductValidation = [
-  body('name')
-    .optional()
-    .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Product name must be between 2 and 100 characters'),
-  body('description')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Description cannot exceed 500 characters'),
-  body('price')
-    .optional()
-    .isFloat({ min: 0.01 })
-    .withMessage('Price must be a positive number'),
-  body('category')
-    .optional()
-    .isIn(['Electronics', 'Clothing', 'Books', 'Home & Garden', 'Sports', 'Beauty', 'Food', 'Other'])
-    .withMessage('Invalid category'),
-  body('stock')
-    .optional()
     .isInt({ min: 0 })
     .withMessage('Stock must be a non-negative integer'),
   body('image')
@@ -123,8 +85,8 @@ router.get('/', optionalAuth, searchValidation, productController.getAllProducts
 router.get('/:productId', optionalAuth, productIdValidation, productController.getProductById);
 
 // Admin only routes (require authentication and admin role)
-router.post('/', authenticate, requireAdmin, productValidation, productController.createProduct);
-router.delete('/:productId', authenticate, requireAdmin, productIdValidation, productController.deleteProduct);
-router.patch('/:productId/stock', authenticate, requireAdmin, stockUpdateValidation, productController.updateStock);
+router.post('/', requireAuth, requireAdmin, productValidation, productController.createProduct);
+router.delete('/:productId', requireAuth, requireAdmin, productIdValidation, productController.deleteProduct);
+router.patch('/:productId/stock', requireAuth, requireAdmin, stockUpdateValidation, productController.updateStock);
 
 module.exports = router;

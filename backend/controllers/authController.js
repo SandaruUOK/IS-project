@@ -1,4 +1,4 @@
-const axios = require('axios');
+/*const axios = require('axios');
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
 
@@ -376,4 +376,170 @@ module.exports = {
   refreshToken,
   logout,
   checkAuth
+};*/
+
+// File: backend/controllers/authController.js
+const passport = require('passport');
+
+// Initiate Auth0 login
+const login = (req, res, next) => {
+  passport.authenticate('auth0', {
+    scope: 'openid email profile'
+  })(req, res, next);
+};
+
+// Handle Auth0 callback
+const callback = (req, res, next) => {
+  passport.authenticate('auth0', (err, user, info) => {
+    if (err) {
+      console.error('Auth0 callback error:', err);
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+    }
+    
+    if (!user) {
+      console.error('Auth0 callback - no user:', info);
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+    }
+
+    req.logIn(user, (err) => {
+      if (err) {
+        console.error('Login error:', err);
+        return res.redirect(`${process.env.FRONTEND_URL}/login?error=login_failed`);
+      }
+
+      // Successful authentication, redirect to frontend
+      res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+    });
+  })(req, res, next);
+};
+
+// Get user profile
+const getProfile = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Not authenticated'
+      });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user: {
+          _id: req.user._id,
+          auth0Id: req.user.auth0Id,
+          email: req.user.email,
+          name: req.user.name,
+          username: req.user.username,
+          contactNumber: req.user.contactNumber,
+          country: req.user.country,
+          emailVerified: req.user.emailVerified,
+          picture: req.user.picture,
+          role: req.user.role,
+          isActive: req.user.isActive,
+          createdAt: req.user.createdAt,
+          updatedAt: req.user.updatedAt,
+          lastLogin: req.user.lastLogin
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch profile'
+    });
+  }
+};
+
+// Check authentication status
+const checkAuth = async (req, res) => {
+  try {
+    if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+      return res.json({
+        status: 'success',
+        data: {
+          isAuthenticated: true,
+          user: {
+            _id: req.user._id,
+            auth0Id: req.user.auth0Id,
+            email: req.user.email,
+            name: req.user.name,
+            username: req.user.username,
+            contactNumber: req.user.contactNumber,
+            country: req.user.country,
+            emailVerified: req.user.emailVerified,
+            picture: req.user.picture,
+            role: req.user.role,
+            isActive: req.user.isActive,
+            createdAt: req.user.createdAt,
+            updatedAt: req.user.updatedAt,
+            lastLogin: req.user.lastLogin
+          }
+        }
+      });
+    }
+
+    res.json({
+      status: 'success',
+      data: {
+        isAuthenticated: false,
+        user: null
+      }
+    });
+  } catch (error) {
+    console.error('Check auth error:', error);
+    res.json({
+      status: 'error',
+      data: {
+        isAuthenticated: false,
+        user: null
+      }
+    });
+  }
+};
+
+// Logout user
+const logout = (req, res) => {
+  try {
+    const returnURL = encodeURIComponent(`${process.env.FRONTEND_URL}/login`);
+    const logoutURL = `https://${process.env.AUTH0_DOMAIN}/v2/logout?client_id=${process.env.AUTH0_CLIENT_ID}&returnTo=${returnURL}`;
+    
+    req.logout((err) => {
+      if (err) {
+        console.error('Logout error:', err);
+        return res.status(500).json({
+          status: 'error',
+          message: 'Logout failed'
+        });
+      }
+      
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Session destroy error:', err);
+        }
+        
+        res.json({
+          status: 'success',
+          message: 'Logout successful',
+          logoutURL: logoutURL
+        });
+      });
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Logout failed'
+    });
+  }
+};
+
+module.exports = {
+  login,
+  callback,
+  getProfile,
+  checkAuth,
+  logout
 };

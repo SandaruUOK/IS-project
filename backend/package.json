@@ -1,7 +1,7 @@
 {
   "name": "secure-ecommerce-backend",
   "version": "1.0.0",
-  "description": "Secure E-commerce Backend with Auth0 Integration",
+  "description": "Secure E-commerce Backend with Auth0 Integration using Passport",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -9,24 +9,23 @@
     "test": "jest"
   },
   "dependencies": {
-    "auth0": "^4.0.1",
     "axios": "^1.11.0",
     "bcryptjs": "^2.4.3",
     "compression": "^1.8.1",
+    "connect-mongo": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
-    "express-jwt": "^8.5.1",
     "express-mongo-sanitize": "^2.2.0",
-    "express-oauth2-jwt-bearer": "^1.7.1",
     "express-rate-limit": "^6.11.2",
+    "express-session": "^1.18.1",
     "express-validator": "^7.2.1",
     "helmet": "^7.2.0",
     "hpp": "^0.2.3",
-    "jsonwebtoken": "^9.0.2",
-    "jwks-rsa": "^3.2.0",
     "mongoose": "^7.8.7",
     "morgan": "^1.10.1",
+    "passport": "^0.7.0",
+    "passport-auth0": "^1.5.0",
     "xss": "^1.0.14",
     "xss-clean": "^0.1.4"
   },
@@ -39,6 +38,7 @@
     "express",
     "mongodb",
     "auth0",
+    "passport",
     "security",
     "ecommerce"
   ],

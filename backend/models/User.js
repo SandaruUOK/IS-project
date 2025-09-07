@@ -1,3 +1,4 @@
+// File: backend/models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -36,12 +37,12 @@ const userSchema = new mongoose.Schema({
   },
   contactNumber: {
     type: String,
-    required: [true, 'Contact number is required'],
-    match: [/^[\+]?[1-9][\d]{0,15}$/, 'Please enter a valid contact number']
+    default: '', // Made optional with default empty string
+    match: [/^[\+]?[1-9][\d]{0,15}$|^$/, 'Please enter a valid contact number or leave empty']
   },
   country: {
     type: String,
-    required: [true, 'Country is required'],
+    default: '', // Made optional with default empty string
     trim: true,
     maxlength: [50, 'Country cannot exceed 50 characters']
   },
@@ -65,6 +66,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['user', 'admin'],
     default: 'user'
+  },
+  // Flag to track if user has completed profile
+  profileCompleted: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true,
@@ -83,6 +89,21 @@ userSchema.virtual('orders', {
   ref: 'Order',
   localField: '_id',
   foreignField: 'user'
+});
+
+// Check if profile is complete
+userSchema.virtual('isProfileComplete').get(function() {
+  return !!(this.contactNumber && this.country && this.contactNumber.length > 0 && this.country.length > 0);
+});
+
+// Pre-save middleware to update profileCompleted flag
+userSchema.pre('save', function(next) {
+  if (this.contactNumber && this.country && this.contactNumber.length > 0 && this.country.length > 0) {
+    this.profileCompleted = true;
+  } else {
+    this.profileCompleted = false;
+  }
+  next();
 });
 
 // Pre-save middleware to hash password (if needed for local auth fallback)
@@ -106,6 +127,19 @@ userSchema.methods.correctPassword = async function(candidatePassword, userPassw
 userSchema.methods.updateLastLogin = function() {
   this.lastLogin = Date.now();
   return this.save({ validateBeforeSave: false });
+};
+
+// Method to update profile information
+userSchema.methods.updateProfile = function(profileData) {
+  const allowedFields = ['name', 'contactNumber', 'country'];
+  
+  allowedFields.forEach(field => {
+    if (profileData[field] !== undefined) {
+      this[field] = profileData[field];
+    }
+  });
+  
+  return this.save();
 };
 
 // Static method to find or create user from Auth0 profile

@@ -1,88 +1,127 @@
-import axios from 'axios';
 import { API_CONFIG } from './config.js';
-import authService from './auth.js';
 
 class ApiService {
   constructor() {
-    this.api = axios.create({
-      baseURL: API_CONFIG.baseURL,
+    this.baseURL = API_CONFIG.baseURL;
+  }
+
+  // Generic fetch method with session authentication
+  async fetchWithAuth(endpoint, options = {}) {
+    const config = {
+      credentials: 'include', // Include session cookies
       headers: {
         'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
+        ...options.headers,
       },
-      withCredentials: true
-    });
+      ...options,
+    };
 
-    // Request interceptor
-    this.api.interceptors.request.use(
-      (config) => {
-        const token = authService.getAccessToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
-    // Response interceptor
-    this.api.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error.response?.status === 401) {
-          authService.logout();
-          window.location.href = '/login';
-        }
-        return Promise.reject(error);
+    try {
+      const response = await fetch(`${this.baseURL}${endpoint}`, config);
+      
+      if (response.status === 401) {
+        // Redirect to login if unauthorized
+        window.location.href = '/login';
+        return;
       }
-    );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Request failed');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('API request error:', error);
+      throw error;
+    }
+  }
+
+  // Auth endpoints
+  async getProfile() {
+    return this.fetchWithAuth('/auth/profile');
+  }
+
+  async checkAuth() {
+    return this.fetchWithAuth('/auth/check');
   }
 
   // User endpoints
-  getProfile() {
-    return this.api.get('/users/profile');
+  async getDashboard() {
+    return this.fetchWithAuth('/users/dashboard');
   }
 
-  getDashboard() {
-    return this.api.get('/users/dashboard');
+  async getUserProfile() {
+    return this.fetchWithAuth('/users/profile');
+  }
+
+  async getOrdersSummary() {
+    return this.fetchWithAuth('/users/orders-summary');
   }
 
   // Product endpoints
-  getProducts(params = {}) {
-    return this.api.get('/products', { params });
+  async getProducts(params = {}) {
+    // Build query string if params provided
+    const queryString = Object.keys(params).length > 0 
+      ? '?' + new URLSearchParams(params).toString() 
+      : '';
+    
+    return this.fetchWithAuth(`/products${queryString}`);
   }
 
-  getProduct(id) {
-    return this.api.get(`/products/${id}`);
+  async getProduct(productId) {
+    return this.fetchWithAuth(`/products/${productId}`);
   }
 
   // Order endpoints
-  createOrder(data) {
-    return this.api.post('/orders', data);
+  async getOrders() {
+    return this.fetchWithAuth('/orders/my-orders');
   }
 
-  getMyOrders(params = {}) {
-    return this.api.get('/orders/my-orders', { params });
+  async getOrder(orderId) {
+    return this.fetchWithAuth(`/orders/${orderId}`);
   }
 
-  getUpcomingOrders() {
-    return this.api.get('/orders/upcoming');
+  async createOrder(orderData) {
+    return this.fetchWithAuth('/orders', {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    });
   }
 
-  getPastOrders() {
-    return this.api.get('/orders/past');
+  async updateOrder(orderId, orderData) {
+    return this.fetchWithAuth(`/orders/${orderId}`, {
+      method: 'PUT',
+      body: JSON.stringify(orderData),
+    });
   }
 
-  getDeliveryLocations() {
-    return this.api.get('/orders/delivery-locations');
+  async cancelOrder(orderId, reason) {
+    return this.fetchWithAuth(`/orders/${orderId}/cancel`, {
+      method: 'PATCH',
+      body: JSON.stringify({ reason }),
+    });
   }
 
-  getDeliveryTimes() {
-    return this.api.get('/orders/delivery-times');
+  async getUpcomingOrders() {
+    return this.fetchWithAuth('/orders/upcoming');
   }
 
-  cancelOrder(orderId, reason) {
-    return this.api.patch(`/orders/${orderId}/cancel`, { reason });
+  async getPastOrders() {
+    return this.fetchWithAuth('/orders/past');
+  }
+
+  async getDeliveryLocations() {
+    return this.fetchWithAuth('/orders/delivery-locations');
+  }
+
+  async getDeliveryTimes() {
+    return this.fetchWithAuth('/orders/delivery-times');
+  }
+
+  // Alias methods for backward compatibility
+  async getMyOrders(params = {}) {
+    return this.getOrders(params);
   }
 }
 

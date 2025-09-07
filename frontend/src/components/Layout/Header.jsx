@@ -20,7 +20,7 @@ const Header = () => {
 
   return (
     <header className="header">
-      <div className="logo">🛒 SecureShop</div>
+      <div className="logo">🛒 SMW Super</div>
       <nav className="nav-menu">
         <button 
           className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
