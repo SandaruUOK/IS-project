@@ -1,12 +1,15 @@
+// File: frontend/src/services/api.js
 import { API_CONFIG } from './config.js';
 
 class ApiService {
   constructor() {
     this.baseURL = API_CONFIG.baseURL;
+    console.log('🔧 API Service initialized with baseURL:', this.baseURL);
   }
 
   // Generic fetch method with session authentication
   async fetchWithAuth(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
     const config = {
       credentials: 'include', // Include session cookies
       headers: {
@@ -16,23 +19,32 @@ class ApiService {
       ...options,
     };
 
+    console.log('🌐 Making request to:', url);
+    console.log('⚙️ Request config:', config);
+
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, config);
+      const response = await fetch(url, config);
+      
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (response.status === 401) {
-        // Redirect to login if unauthorized
+        console.log('🚫 Unauthorized - redirecting to login');
         window.location.href = '/login';
         return;
       }
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Request failed');
+        console.error('❌ Response not OK:', errorData);
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      console.log('✅ Response data:', data);
+      return data;
     } catch (error) {
-      console.error('API request error:', error);
+      console.error('💥 Fetch error:', error);
       throw error;
     }
   }

@@ -1,3 +1,4 @@
+// File: frontend/src/components/Products/ProductList.jsx
 import React, { useState, useEffect } from 'react';
 import apiService from '../../services/api.js';
 import ProductCard from './ProductCard.jsx';
@@ -13,8 +14,16 @@ const ProductList = () => {
     const fetchProducts = async () => {
       try {
         const response = await apiService.getProducts();
-        setProducts(response.data.data.products);
+        
+        // The API response structure is: {status: 'success', data: {products: [...], pagination: {...}}}
+        if (response.status === 'success' && response.data && response.data.products) {
+          setProducts(response.data.products);
+        } else {
+          console.error('Unexpected response structure:', response);
+          setError('Unexpected response format from server');
+        }
       } catch (error) {
+        console.error('Failed to fetch products:', error);
         setError('Failed to fetch products');
       } finally {
         setLoading(false);
@@ -44,15 +53,19 @@ const ProductList = () => {
           Browse our secure product catalog and place orders
         </p>
         
-        <div className="products-grid">
-          {products.map(product => (
-            <ProductCard 
-              key={product._id} 
-              product={product} 
-              onOrder={() => handleOrderProduct(product)}
-            />
-          ))}
-        </div>
+        {products.length === 0 ? (
+          <p>No products available</p>
+        ) : (
+          <div className="products-grid">
+            {products.map(product => (
+              <ProductCard 
+                key={product._id} 
+                product={product} 
+                onOrder={() => handleOrderProduct(product)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {selectedProduct && (
