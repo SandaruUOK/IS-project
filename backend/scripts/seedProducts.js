@@ -7,107 +7,106 @@ const Product = require('../models/Product');
 // Sample products data
 const sampleProducts = [
   {
-    name: "Wireless Bluetooth Headphones",
-    description: "High-quality wireless headphones with noise cancellation and 20-hour battery life.",
-    price: 89.99,
+    name: "Samsung Galaxy S24 Ultra",
+    description: "Flagship Samsung smartphone with S Pen, 200MP camera, and AI-powered features.",
+    price: 1299.99,
     category: "Electronics",
-    stock: 50,
-    image: "headphones.jpg",
-    tags: ["wireless", "bluetooth", "music", "audio"],
-    isActive: true
-  },
-  {
-    name: "Organic Cotton T-Shirt",
-    description: "Comfortable 100% organic cotton t-shirt available in multiple colors.",
-    price: 24.99,
-    category: "Clothing",
-    stock: 100,
-    image: "tshirt.jpg",
-    tags: ["organic", "cotton", "casual", "comfortable"],
-    isActive: true
-  },
-  {
-    name: "JavaScript Programming Guide",
-    description: "Complete guide to modern JavaScript programming with practical examples.",
-    price: 39.99,
-    category: "Books",
     stock: 25,
-    image: "js-book.jpg",
-    tags: ["programming", "javascript", "coding", "learning"],
+    image: "/images/phones/s24-ultra.jpg",
+    tags: ["samsung", "smartphone", "android", "camera", "s-pen"],
     isActive: true
   },
   {
-    name: "Smart Fitness Watch",
-    description: "Advanced fitness tracker with heart rate monitoring and GPS.",
-    price: 199.99,
+    name: "iPhone 15 Pro Max",
+    description: "Apple's premium smartphone with titanium design, A17 Pro chip, and advanced camera system.",
+    price: 1199.99,
     category: "Electronics",
     stock: 30,
-    image: "fitness-watch.jpg",
-    tags: ["fitness", "health", "smartwatch", "gps"],
+    image: "/images/phones/iphone-15-pro-max.jpeg",
+    tags: ["apple", "iphone", "ios", "premium", "camera"],
     isActive: true
   },
   {
-    name: "Yoga Mat Pro",
-    description: "Premium non-slip yoga mat perfect for all types of yoga and exercise.",
-    price: 45.99,
-    category: "Sports",
-    stock: 75,
-    image: "yoga-mat.jpg",
-    tags: ["yoga", "exercise", "fitness", "meditation"],
-    isActive: true
-  },
-  {
-    name: "Organic Face Moisturizer",
-    description: "Natural organic face moisturizer suitable for all skin types.",
-    price: 32.99,
-    category: "Beauty",
-    stock: 40,
-    image: "moisturizer.jpg",
-    tags: ["organic", "skincare", "natural", "face"],
-    isActive: true
-  },
-  {
-    name: "Gourmet Coffee Beans",
-    description: "Premium single-origin coffee beans with rich flavor and aroma.",
-    price: 18.99,
-    category: "Food",
-    stock: 60,
-    image: "coffee-beans.jpg",
-    tags: ["coffee", "gourmet", "organic", "beans"],
-    isActive: true
-  },
-  {
-    name: "Indoor Plant - Snake Plant",
-    description: "Low-maintenance snake plant perfect for indoor spaces.",
-    price: 15.99,
-    category: "Home & Garden",
-    stock: 35,
-    image: "snake-plant.jpg",
-    tags: ["plant", "indoor", "decoration", "air-purifying"],
-    isActive: true
-  },
-  {
-    name: "Wireless Mouse",
-    description: "Ergonomic wireless mouse with precision tracking and long battery life.",
-    price: 29.99,
+    name: "Google Pixel 8 Pro",
+    description: "Google's flagship with advanced AI photography, pure Android experience, and Magic Eraser.",
+    price: 999.99,
     category: "Electronics",
-    stock: 80,
-    image: "wireless-mouse.jpg",
-    tags: ["wireless", "computer", "ergonomic", "office"],
+    stock: 20,
+    image: "/images/phones/pixel-8-pro.jpg",
+    tags: ["google", "pixel", "android", "ai", "photography"],
     isActive: true
   },
   {
-    name: "Essential Oil Diffuser",
-    description: "Ultrasonic essential oil diffuser with LED lights and timer function.",
-    price: 49.99,
-    category: "Home & Garden",
+    name: "Samsung Galaxy S25",
+    description: "Premium Samsung phone with enhanced display, improved battery life, and Galaxy AI features.",
+    price: 999.99,
+    category: "Electronics",
+    stock: 35,
+    image: "/images/phones/s25.jpeg",
+    tags: ["samsung", "smartphone", "android", "display", "battery"],
+    isActive: true
+  },
+  {
+    name: "iPhone 15 Pro",
+    description: "Pro-level iPhone with titanium build, Action Button, and professional camera capabilities.",
+    price: 999.99,
+    category: "Electronics",
+    stock: 40,
+    image: "/images/phones/iphone-15-pro.jpeg",
+    tags: ["apple", "iphone", "ios", "titanium", "professional"],
+    isActive: true
+  },
+  {
+    name: "Google Pixel 8",
+    description: "Smart Android phone with computational photography, 7 years of updates, and clean interface.",
+    price: 699.99,
+    category: "Electronics",
     stock: 45,
-    image: "oil-diffuser.jpg",
-    tags: ["aromatherapy", "essential-oils", "relaxation", "home"],
+    image: "/images/phones/pixel-8.jpg",
+    tags: ["google", "pixel", "android", "updates", "smart"],
+    isActive: true
+  },
+  {
+    name: "Samsung Galaxy S24",
+    description: "Compact flagship with powerful performance, bright display, and versatile camera system.",
+    price: 799.99,
+    category: "Electronics",
+    stock: 50,
+    image: "/images/phones/s24.jpeg",
+    tags: ["samsung", "smartphone", "android", "compact", "performance"],
+    isActive: true
+  },
+  {
+    name: "iPhone 15",
+    description: "Standard iPhone with USB-C, improved cameras, and Dynamic Island technology.",
+    price: 799.99,
+    category: "Electronics",
+    stock: 60,
+    image: "/images/phones/iphone-15.jpg",
+    tags: ["apple", "iphone", "ios", "usb-c", "dynamic-island"],
+    isActive: true
+  },
+  {
+    name: "iPhone 15 Plus",
+    description: "Large-screen iPhone with all-day battery life, advanced dual-camera system, and A16 Bionic chip.",
+    price: 899.99,
+    category: "Electronics",
+    stock: 35,
+    image: "/images/phones/iphone-15-plus.jpg",
+    tags: ["apple", "iphone", "ios", "large-screen", "battery"],
+    isActive: true
+  },
+  {
+    name: "Google Pixel 7a",
+    description: "Mid-range Pixel with flagship camera features, wireless charging, and affordable pricing.",
+    price: 499.99,
+    category: "Electronics",
+    stock: 70,
+    image: "/images/phones/pixel-7a.jpeg",
+    tags: ["google", "pixel", "android", "mid-range", "affordable"],
     isActive: true
   }
 ];
-
 async function seedProducts() {
   try {
     // Connect to MongoDB

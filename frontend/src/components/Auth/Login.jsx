@@ -33,8 +33,6 @@ const Login = () => {
         
         <div style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
           <p>✅ Secure session-based authentication</p>
-          <p>✅ OWASP Top 10 security measures</p>
-          <p>✅ Server-side token validation</p>
         </div>
       </div>
     </div>

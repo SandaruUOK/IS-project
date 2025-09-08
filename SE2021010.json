@@ -1,0 +1,9 @@
+{
+  "sid": "SE2021010",
+  "name": "S.M.Weerasekara",
+  "app-url": "http://localhost:3000",
+  "git": "https://github.com/SandaruUOK/IS-project",
+  "blog": [
+    "https://medium.com/@sandaruwee01/building-my-first-secure-e-commerce-platform-a-journey-through-auth0-and-owasp-best-practices-4791fe7afe8b"
+  ]
+}
