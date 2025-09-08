@@ -333,10 +333,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Contact
 
-Your Name - your.email@example.com
-
-Project Link: [https://github.com/yourusername/secure-ecommerce-platform](https://github.com/yourusername/secure-ecommerce-platform)
+Your Name - SE/2021/010 Sandaru Mihiran Weerasekara
 
 ---
 
-**⚠️ Security Notice**: This application is designed for educational purposes. For production deployment, ensure all security measures are properly configured and regularly updated.
