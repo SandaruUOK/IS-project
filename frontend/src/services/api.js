@@ -1,3 +1,4 @@
+// File: frontend/src/services/api.js
 import { API_CONFIG } from './config.js';
 
 class ApiService {
@@ -25,7 +26,6 @@ class ApiService {
       const response = await fetch(url, config);
       
       console.log('📡 Response status:', response.status);
-      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (response.status === 401) {
         console.log('🚫 Unauthorized - redirecting to login');
@@ -72,7 +72,6 @@ class ApiService {
 
   // Product endpoints
   async getProducts(params = {}) {
-    // Build query string if params provided
     const queryString = Object.keys(params).length > 0 
       ? '?' + new URLSearchParams(params).toString() 
       : '';
@@ -85,8 +84,20 @@ class ApiService {
   }
 
   // Order endpoints
-  async getOrders() {
-    return this.fetchWithAuth('/orders/my-orders');
+  async getMyOrders(params = {}) {
+    const queryString = Object.keys(params).length > 0 
+      ? '?' + new URLSearchParams(params).toString() 
+      : '';
+    
+    return this.fetchWithAuth(`/orders/my-orders${queryString}`);
+  }
+
+  async getUpcomingOrders() {
+    return this.fetchWithAuth('/orders/upcoming');
+  }
+
+  async getPastOrders() {
+    return this.fetchWithAuth('/orders/past');
   }
 
   async getOrder(orderId) {
@@ -114,25 +125,12 @@ class ApiService {
     });
   }
 
-  async getUpcomingOrders() {
-    return this.fetchWithAuth('/orders/upcoming');
-  }
-
-  async getPastOrders() {
-    return this.fetchWithAuth('/orders/past');
-  }
-
   async getDeliveryLocations() {
     return this.fetchWithAuth('/orders/delivery-locations');
   }
 
   async getDeliveryTimes() {
     return this.fetchWithAuth('/orders/delivery-times');
-  }
-
-  // Alias methods for backward compatibility
-  async getMyOrders(params = {}) {
-    return this.getOrders(params);
   }
 }
 
