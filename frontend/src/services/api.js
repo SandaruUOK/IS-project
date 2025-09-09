@@ -1,4 +1,3 @@
-// File: frontend/src/services/api.js
 import { API_CONFIG } from './config.js';
 
 class ApiService {

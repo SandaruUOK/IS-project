@@ -8,7 +8,7 @@ const Login = () => {
     <div className="login-container">
       <div className="login-card">
         <h1 style={{ marginBottom: '2rem', color: '#333' }}>
-          Welcome to SecureShop
+          Welcome to SMW Super
         </h1>
         <p style={{ marginBottom: '2rem', color: '#666' }}>
           A secure e-commerce platform with Auth0 authentication using Passport.js

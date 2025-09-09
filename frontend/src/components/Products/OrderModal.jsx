@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import apiService from '../../services/api.js';
 
@@ -10,29 +11,60 @@ const OrderModal = ({ product, onClose }) => {
     message: ''
   });
   const [deliveryLocations, setDeliveryLocations] = useState([]);
-  const [deliveryTimes, setDeliveryTimes] = useState([]);
+  const [deliveryTimes, setDeliveryTimes] = useState(['10 AM', '11 AM', '12 PM']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [fetchingOptions, setFetchingOptions] = useState(true);
 
   useEffect(() => {
     const fetchDeliveryOptions = async () => {
       try {
-        const [locations, times] = await Promise.all([
+        console.log('🔍 Fetching delivery options...');
+        
+        const [locationsResponse, timesResponse] = await Promise.all([
           apiService.getDeliveryLocations(),
           apiService.getDeliveryTimes()
         ]);
-        setDeliveryLocations(locations.data.data.locations);
-        setDeliveryTimes(times.data.data.times);
+
+        console.log('📍 Locations Response:', locationsResponse);
+        console.log('⏰ Times Response:', timesResponse);
+
+        // Handle locations - backend returns {status: 'success', data: {districts: [...]}}
+        if (locationsResponse.status === 'success' && locationsResponse.data.districts) {
+          setDeliveryLocations(locationsResponse.data.districts);
+          // Set first location as default
+          if (locationsResponse.data.districts.length > 0) {
+            setFormData(prev => ({ 
+              ...prev, 
+              preferredDeliveryLocation: locationsResponse.data.districts[0] 
+            }));
+          }
+        }
+
+        // Handle times - backend returns {status: 'success', data: {times: [...]}}
+        if (timesResponse.status === 'success' && timesResponse.data.times) {
+          setDeliveryTimes(timesResponse.data.times);
+        }
+
+      } catch (error) {
+        console.error('❌ Failed to fetch delivery options:', error);
+        setError('Failed to load delivery options');
         
-        if (locations.data.data.locations.length > 0) {
+        // Set fallback data
+        setDeliveryLocations([
+          'Colombo', 'Gampaha', 'Kalutara', 'Kandy', 'Matale', 'Nuwara Eliya',
+          'Galle', 'Matara', 'Hambantota', 'Kurunegala', 'Anuradhapura'
+        ]);
+        
+        if (deliveryLocations.length > 0) {
           setFormData(prev => ({ 
             ...prev, 
-            preferredDeliveryLocation: locations.data.data.locations[0] 
+            preferredDeliveryLocation: deliveryLocations[0] 
           }));
         }
-      } catch (error) {
-        setError('Failed to fetch delivery options');
+      } finally {
+        setFetchingOptions(false);
       }
     };
 
@@ -79,19 +111,33 @@ const OrderModal = ({ product, onClose }) => {
       return;
     }
 
+    if (!formData.preferredDeliveryLocation) {
+      setError('Please select a delivery location');
+      setLoading(false);
+      return;
+    }
+
     try {
+      console.log('📦 Submitting order:', formData);
+      
       await apiService.createOrder({
         productId: product._id,
-        ...formData,
-        quantity: parseInt(formData.quantity)
+        productName: product.name,
+        quantity: parseInt(formData.quantity),
+        purchaseDate: formData.purchaseDate,
+        preferredDeliveryTime: formData.preferredDeliveryTime,
+        preferredDeliveryLocation: formData.preferredDeliveryLocation,
+        message: formData.message
       });
+      
       setSuccess(true);
       setTimeout(() => {
         onClose();
         window.location.reload();
       }, 2000);
     } catch (error) {
-      setError(error.response?.data?.message || 'Failed to create order');
+      console.error('❌ Order creation failed:', error);
+      setError(error.message || 'Failed to create order');
     } finally {
       setLoading(false);
     }
@@ -99,9 +145,13 @@ const OrderModal = ({ product, onClose }) => {
 
   if (success) {
     return (
-      <div className="modal-overlay">
-        <div className="modal">
-          <div className="success">
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal" onClick={e => e.stopPropagation()}>
+          <div className="success" style={{
+            textAlign: 'center',
+            padding: '2rem',
+            color: '#28a745'
+          }}>
             ✅ Order placed successfully! 
             <br />You will be redirected shortly.
           </div>
@@ -111,112 +161,189 @@ const OrderModal = ({ product, onClose }) => {
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <h3 style={{ marginBottom: '1.5rem', color: '#333' }}>
-          Order: {product.name}
-        </h3>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h3 style={{ margin: 0, color: '#333' }}>
+            Order: {product.name}
+          </h3>
+          <button 
+            onClick={onClose}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              fontSize: '1.5rem', 
+              cursor: 'pointer',
+              color: '#999'
+            }}
+          >
+            ×
+          </button>
+        </div>
 
-        {error && <div className="error">{error}</div>}
+        {error && (
+          <div style={{ 
+            backgroundColor: '#f8d7da', 
+            color: '#721c24', 
+            padding: '0.75rem', 
+            borderRadius: '4px', 
+            marginBottom: '1rem' 
+          }}>
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Quantity</label>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              Quantity
+            </label>
             <input
               type="number"
               name="quantity"
-              className="form-input"
               value={formData.quantity}
               onChange={handleInputChange}
               min="1"
               max={product.stock}
               required
+              style={{ 
+                width: '100%', 
+                padding: '0.5rem', 
+                border: '1px solid #ccc', 
+                borderRadius: '4px' 
+              }}
             />
             <small style={{ color: '#666' }}>
-              Available: {product.stock} | Price: ${product.price} each
+              Available: {product.stock} | Price: ${product.price} each | Total: ${(product.price * formData.quantity).toFixed(2)}
             </small>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Purchase Date</label>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              Purchase Date
+            </label>
             <input
               type="date"
               name="purchaseDate"
-              className="form-input"
               value={formData.purchaseDate}
               onChange={handleInputChange}
               min={new Date().toISOString().split('T')[0]}
               required
+              style={{ 
+                width: '100%', 
+                padding: '0.5rem', 
+                border: '1px solid #ccc', 
+                borderRadius: '4px' 
+              }}
             />
             <small style={{ color: '#666' }}>
               Note: Sundays are not available for delivery
             </small>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Preferred Delivery Time</label>
-            <select
-              name="preferredDeliveryTime"
-              className="form-select"
-              value={formData.preferredDeliveryTime}
-              onChange={handleInputChange}
-              required
-            >
-              {deliveryTimes.map(time => (
-                <option key={time} value={time}>{time}</option>
-              ))}
-            </select>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              Preferred Delivery Time
+            </label>
+            {fetchingOptions ? (
+              <div>Loading times...</div>
+            ) : (
+              <select
+                name="preferredDeliveryTime"
+                value={formData.preferredDeliveryTime}
+                onChange={handleInputChange}
+                required
+                style={{ 
+                  width: '100%', 
+                  padding: '0.5rem', 
+                  border: '1px solid #ccc', 
+                  borderRadius: '4px' 
+                }}
+              >
+                {deliveryTimes.map(time => (
+                  <option key={time} value={time}>{time}</option>
+                ))}
+              </select>
+            )}
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Delivery Location</label>
-            <select
-              name="preferredDeliveryLocation"
-              className="form-select"
-              value={formData.preferredDeliveryLocation}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="">Select a district</option>
-              {deliveryLocations.map(location => (
-                <option key={location} value={location}>{location}</option>
-              ))}
-            </select>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              Delivery Location
+            </label>
+            {fetchingOptions ? (
+              <div>Loading locations...</div>
+            ) : (
+              <select
+                name="preferredDeliveryLocation"
+                value={formData.preferredDeliveryLocation}
+                onChange={handleInputChange}
+                required
+                style={{ 
+                  width: '100%', 
+                  padding: '0.5rem', 
+                  border: '1px solid #ccc', 
+                  borderRadius: '4px' 
+                }}
+              >
+                <option value="">Select a district</option>
+                {deliveryLocations.map(location => (
+                  <option key={location} value={location}>{location}</option>
+                ))}
+              </select>
+            )}
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Message (Optional)</label>
+          <div style={{ marginBottom: '2rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              Message (Optional)
+            </label>
             <textarea
               name="message"
-              className="form-input"
               value={formData.message}
               onChange={handleInputChange}
-              rows="3"
               placeholder="Any special instructions..."
-              maxLength="500"
+              rows="3"
+              style={{ 
+                width: '100%', 
+                padding: '0.5rem', 
+                border: '1px solid #ccc', 
+                borderRadius: '4px',
+                resize: 'vertical'
+              }}
             />
           </div>
 
-          <div style={{ 
-            display: 'flex', 
-            gap: '1rem', 
-            justifyContent: 'flex-end',
-            marginTop: '2rem' 
-          }}>
-            <button 
-              type="button" 
-              className="btn btn-secondary" 
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button
+              type="button"
               onClick={onClose}
-              disabled={loading}
+              style={{
+                flex: 1,
+                padding: '0.75rem',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
             >
               Cancel
             </button>
-            <button 
-              type="submit" 
-              className="btn"
-              disabled={loading}
+            <button
+              type="submit"
+              disabled={loading || fetchingOptions}
+              style={{
+                flex: 2,
+                padding: '0.75rem',
+                backgroundColor: loading ? '#6c757d' : '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: loading ? 'not-allowed' : 'pointer'
+              }}
             >
-              {loading ? 'Placing Order...' : `Place Order - ${(product.price * formData.quantity).toFixed(2)}`}
+              {loading ? 'Placing Order...' : `Place Order - $${(product.price * formData.quantity).toFixed(2)}`}
             </button>
           </div>
         </form>
